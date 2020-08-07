@@ -3,6 +3,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.shortcuts import redirect
 
 from .models import User, Categories, Listings
 
@@ -10,14 +11,27 @@ from .models import User, Categories, Listings
 def index(request):
     if request.method == 'POST':
 
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        price = request.POST.get('starting_price')
+        pic = request.POST.get('picture')
         category = request.POST.get('category')
         cat = Categories.objects.get(category=category)
 
+        # Checks to make sure user includes a title, description, & price.
+        if not title or not description or not price:
+            message = "You must include a title, description, & price."
+            return render(request, "auctions/create_listing.html", {
+                "message": message,
+                "categories": Categories.objects.all()
+            })
+
+        #Create listing
         listing = Listings(
-            title = request.POST.get('title'),
-            description = request.POST.get('description'),
-            starting_bid = request.POST.get('starting_price'),
-            picture =  request.POST.get('picture'),
+            title = title,
+            description = description,
+            starting_bid = price,
+            picture =  pic,
             category = cat
         )
 
@@ -88,3 +102,17 @@ def create_listing(request):
     return render(request, "auctions/create_listing.html", {
         "categories": Categories.objects.all()
     })
+
+def item(request, title):
+
+        item = Listings.objects.get(title=title)
+        title = item.title
+        price = item.starting_bid
+        description = item.description
+        pic = item.picture
+        category = item.category
+        print(item)
+        return render(request, "auctions/item.html",{
+            "title": title, "price": price, "description": description,
+            "picture": pic, "category": category
+        })

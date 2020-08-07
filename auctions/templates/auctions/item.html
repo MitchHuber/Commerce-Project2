@@ -1,0 +1,21 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+  {% if user.is_authenticated %}
+    <button type="button" name="button">Add {{title}} to wishlist</button><br><br>
+  {% endif %}
+  <img style="width:200px; height:200px;"src="{{picture}}" alt="{{title}}">
+  <h3>{{title}}</h3>
+  <p>{{description}}</p>
+  <h5>The current bid is at: ${{price}}</h5>
+  {% if user.is_authenticated %}
+  <form action="" method="post">
+    {% csrf_token %}
+    <input type="number" name="SHIT" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
+    </form>
+    <br> <br>
+    <textarea name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea><br>
+    <button type="submit" name="button">Submit Comment</button>
+  {% endif %}
+  <p>Category: {{category}}</p>
+{% endblock %}

@@ -18,4 +18,4 @@ class Listings(models.Model):
     category = models.ForeignKey(Categories, on_delete=models.CASCADE, null=True)
 
     def __str_(self):
-        return f"{self.title} starting at {self.starting_bid}, {self.description} {self.picture} {self.category}"
+        return f"{self.title}"
