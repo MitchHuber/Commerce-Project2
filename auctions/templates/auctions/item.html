@@ -1,6 +1,12 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
+  {% if message %}
+  <div >
+    {{message}}
+  </div>
+  <br>
+  {% endif %}
   {% if user.is_authenticated %}
     <button type="button" name="button">Add {{title}} to wishlist</button><br><br>
   {% endif %}
@@ -9,9 +15,9 @@
   <p>{{description}}</p>
   <h5>The current bid is at: ${{price}}</h5>
   {% if user.is_authenticated %}
-  <form action="" method="post">
+  <form action="{% url 'item' title%}" method="post">
     {% csrf_token %}
-    <input type="number" name="SHIT" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
+    <input type="number" name="bid" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
     </form>
     <br> <br>
     <textarea name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea><br>

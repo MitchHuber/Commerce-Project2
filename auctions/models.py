@@ -17,5 +17,5 @@ class Listings(models.Model):
     picture = models.URLField(null=True)
     category = models.ForeignKey(Categories, on_delete=models.CASCADE, null=True)
 
-    def __str_(self):
+    def __str__(self):
         return f"{self.title}"
