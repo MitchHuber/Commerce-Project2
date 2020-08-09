@@ -8,14 +8,25 @@
   <br>
   {% endif %}
   {% if user.is_authenticated %}
-    <button type="button" name="button">Add {{title}} to wishlist</button><br><br>
+    {% if check %}
+    <form action="{% url 'removewatchlist' title  %}" method="post">
+      {% csrf_token %}
+      <button type="submit" name="wishlist">Remove {{title}} from watchlist</button><br><br>
+    </form>
+    {% else %}
+    <form action="{% url 'addwatchlist' title  %}" method="post">
+      {% csrf_token %}
+      <button type="submit" name="wishlist">Add {{title}} to watchlist</button><br><br>
+    </form>
+    {% endif %}
   {% endif %}
+  <p>Seller: {{owner}}</p>
   <img style="width:200px; height:200px;"src="{{picture}}" alt="{{title}}">
   <h3>{{title}}</h3>
   <p>{{description}}</p>
   <h5>The current bid is at: ${{price}}</h5>
   {% if user.is_authenticated %}
-  <form action="{% url 'item' title%}" method="post">
+  <form action="{% url 'item' title %}" method="post">
     {% csrf_token %}
     <input type="number" name="bid" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
     </form>

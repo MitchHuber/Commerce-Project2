@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.shortcuts import redirect
 
-from .models import User, Categories, Listings
+from .models import User, Categories, Listings, Watchlist
 
 
 def index(request):
@@ -17,6 +17,7 @@ def index(request):
         pic = request.POST.get('picture')
         category = request.POST.get('category')
         cat = Categories.objects.get(category=category)
+        owner = User.objects.get(username=request.user)
 
         # If the user doesnt include a photo, a stock image is used
         if not pic:
@@ -35,7 +36,8 @@ def index(request):
             description = description,
             starting_bid = price,
             picture =  pic,
-            category = cat
+            category = cat,
+            owner = owner
         )
 
         listing.save()
@@ -108,7 +110,46 @@ def create_listing(request):
     })
 
 def watchlist(request):
-    return render(request, "auctions/watchlist.html")
+    watchlist = Watchlist.objects.all()
+    list = []
+
+    for listing in watchlist:
+        if listing.user == User.objects.get(username=request.user):
+            list.append(listing.item)
+
+    if len(list) == 0:
+        return render(request, "auctions/category.html",{
+            "message": "There are no items in your watchlist."
+            })
+    else:
+        return render(request, "auctions/category.html",{
+            "items": list
+        })
+
+def addwatchlist(request, title):
+    if request.method == "POST":
+        user = User.objects.get(username=request.user)
+        item = Listings.objects.get(title=title)
+        watchlist = Watchlist(
+            user = user,
+            item = item
+        )
+
+        watchlist.save()
+
+        return render(request, "auctions/item.html",{
+        "title": item.title, "price": item.starting_bid, "description": item.description,
+        "picture": item.picture, "category": item.category, "check": True, "owner": item.owner
+        })
+
+def removewatchlist(request, title):
+    user = User.objects.get(username=request.user)
+    item = Listings.objects.get(title=title)
+    product = Watchlist.objects.get(user=user,item=item).delete()
+    return render(request,"auctions/item.html",{
+        "title": item.title, "price": item.starting_bid, "description": item.description,
+        "picture": item.picture, "category": item.category, "check": False, "owner": item.owner
+    })
 
 def categories(request):
     #Links user to the webpage that displays all of the categories
@@ -160,13 +201,18 @@ def item(request, title):
             return HttpResponseRedirect(reverse('admin:index'))
         else:
             item = Listings.objects.get(title=title)
-            title = item.title
-            price = item.starting_bid
-            description = item.description
-            pic = item.picture
-            category = item.category
-
-            return render(request, "auctions/item.html",{
-                "title": title, "price": price, "description": description,
-                "picture": pic, "category": category
-            })
+            #Created a check to see if the item is already in the user's watchlist
+            check = False
+            try:
+                product = Watchlist.objects.get(item=item)
+                if product.user == User.objects.get(username=request.user):
+                    check = True
+                return render(request, "auctions/item.html",{
+                    "title": item.title, "price": item.starting_bid, "description": item.description,
+                    "picture": item.picture, "category": item.category, "owner": item.owner, "check": check
+                })
+            except:
+                return render(request, "auctions/item.html",{
+                    "title": item.title, "price": item.starting_bid, "description": item.description,
+                    "picture": item.picture, "category": item.category, "owner": item.owner, "check": check
+                })

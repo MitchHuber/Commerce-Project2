@@ -2,13 +2,15 @@
 
 {% block body %}
   {% if message %}
-    {{message}}
+    <h1>{{message}}</h1>
   {% endif %}
  {% for category in categories %}
- <li>
-   <a href="{% url 'category' category.category %}">
-      {{category}}
-   </a>
- </li>
+ <ul class="list-group list-group-flush">
+   <li class="list-item">
+     <a href="{% url 'category' category.category %}">
+        {{category}}
+     </a>
+   </li>
+ </ul>
  {% endfor %}
 {% endblock %}

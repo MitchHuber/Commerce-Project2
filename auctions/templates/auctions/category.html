@@ -1,6 +1,9 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
+{% if message %}
+ <h1>{{message}}</h1>
+{% endif%}
 <ul class="list-group list-group-flush">
   {% for item in items %}
     <li class="list-group-item">
