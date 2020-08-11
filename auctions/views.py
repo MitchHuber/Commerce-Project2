@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.shortcuts import redirect
 
-from .models import User, Categories, Listings, Watchlist
+from .models import User, Categories, Listings, Watchlist, Bids, Comments
 
 
 def index(request):
@@ -130,26 +130,54 @@ def addwatchlist(request, title):
     if request.method == "POST":
         user = User.objects.get(username=request.user)
         item = Listings.objects.get(title=title)
+        isowner = False
         watchlist = Watchlist(
             user = user,
             item = item
         )
 
         watchlist.save()
+        if item.owner == request.user:
+            isowner = True
 
-        return render(request, "auctions/item.html",{
-        "title": item.title, "price": item.starting_bid, "description": item.description,
-        "picture": item.picture, "category": item.category, "check": True, "owner": item.owner
-        })
+        try:
+            bid = Bids.objects.get(user=request.user,item=item)
+            if bid.price == item.starting_bid:
+                highestBidder = True
+            return render(request,"auctions/item.html",{
+                "title": item.title, "price": item.starting_bid, "description": item.description,
+                "picture": item.picture, "category": item.category, "check": True, "owner": item.owner,
+                "highestBidder": highestBidder, "isowner": isowner
+            })
+        except:
+            return render(request, "auctions/item.html",{
+            "title": item.title, "price": item.starting_bid, "description": item.description,
+            "picture": item.picture, "category": item.category, "check": True, "owner": item.owner,
+            "isowner": isowner
+            })
 
 def removewatchlist(request, title):
     user = User.objects.get(username=request.user)
     item = Listings.objects.get(title=title)
     product = Watchlist.objects.get(user=user,item=item).delete()
-    return render(request,"auctions/item.html",{
-        "title": item.title, "price": item.starting_bid, "description": item.description,
-        "picture": item.picture, "category": item.category, "check": False, "owner": item.owner
-    })
+    isowner = False
+    if item.owner == request.user:
+        isowner = True
+    try:
+        bid = Bids.objects.get(user=request.user,item=item)
+        if bid.price == item.starting_bid:
+            highestBidder = True
+        return render(request,"auctions/item.html",{
+            "title": item.title, "price": item.starting_bid, "description": item.description,
+            "picture": item.picture, "category": item.category, "check": False, "owner": item.owner,
+            "highestBidder": highestBidder, "isowner": isowner
+        })
+    except:
+        return render(request,"auctions/item.html",{
+            "title": item.title, "price": item.starting_bid, "description": item.description,
+            "picture": item.picture, "category": item.category, "check": False, "owner": item.owner,
+            "isowner": isowner
+        })
 
 def categories(request):
     #Links user to the webpage that displays all of the categories
@@ -175,44 +203,117 @@ def category(request, cat):
         "items": list
     })
 
-def item(request, title):
-    if request.method == "POST":
-        item = Listings.objects.get(title=title)
-        bid = request.POST.get('bid')
+def comment(request,title):
+    item = Listings.objects.get(title=title)
 
-        if(int(bid) <= item.starting_bid):
-            message = "Your bid must be greater than the current bid."
-            return render(request, "auctions/item.html",{
-                "message": message, "title": item.title, "price": item.starting_bid,
-                "description": item.description, "picture": item.picture,
-                "category": item.category
-            })
-        else:
-            item.starting_bid = bid
-            item.save()
-            message = "Your bid was successful!"
-            return render(request, "auctions/item.html",{
-                "message": message, "title": item.title, "price": item.starting_bid,
-                "description": item.description, "picture": item.picture,
-                "category": item.category
-            })
+    comment = Comments(
+        user = request.user,
+        item = item,
+        comment = request.POST.get('comments')
+    )
+
+    comment.save()
+
+    return render(request, "auctions/item.html",{
+        "message": message, "title": item.title, "price": item.starting_bid,
+        "description": item.description, "picture": item.picture,
+        "category": item.category
+    })
+
+def bid(request,title):
+    item = Listings.objects.get(title=title)
+    bid = request.POST.get('bid')
+
+    if(int(bid) <= item.starting_bid):
+        message = "Your bid must be greater than the current bid."
+        return render(request, "auctions/item.html",{
+            "message": "Your bid must be greater than the current bid.",
+            "title": item.title, "price": item.starting_bid,
+            "description": item.description, "picture": item.picture,
+            "category": item.category
+        })
     else:
-        if title == "admin":
-            return HttpResponseRedirect(reverse('admin:index'))
+        item.starting_bid = bid
+        item.save()
+
+        bid = Bids(
+            user = User.objects.get(username=request.user),
+            item = item,
+            price = bid
+        )
+        bid.save()
+
+        message = "Your bid was successful!"
+
+        if item.starting_bid == bid.price:
+            return render(request, "auctions/item.html",{
+                "message": message, "title": item.title, "price": item.starting_bid,
+                "description": item.description, "picture": item.picture,
+                "category": item.category, "highestBidder": True
+            })
         else:
+            return render(request, "auctions/item.html",{
+                "message": message, "title": item.title, "price": item.starting_bid,
+                "description": item.description, "picture": item.picture,
+                "category": item.category
+            })
+
+def item(request, title):
+    if title == "admin":
+        return HttpResponseRedirect(reverse('admin:index'))
+    else:
+        try:
             item = Listings.objects.get(title=title)
-            #Created a check to see if the item is already in the user's watchlist
             check = False
+            isowner = False
+            highestBidder = False
+            commentList = []
+
             try:
                 product = Watchlist.objects.get(item=item)
                 if product.user == User.objects.get(username=request.user):
                     check = True
+                bid = Bids.objects.get(user=request.user,item=item)
+                if bid.price == item.starting_bid:
+                    highestBidder = True
+                if item.owner == request.user:
+                    isowner = True
                 return render(request, "auctions/item.html",{
                     "title": item.title, "price": item.starting_bid, "description": item.description,
-                    "picture": item.picture, "category": item.category, "owner": item.owner, "check": check
+                    "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
+                    "isowner": isowner, "highestBidder": highestBidder
                 })
             except:
-                return render(request, "auctions/item.html",{
-                    "title": item.title, "price": item.starting_bid, "description": item.description,
-                    "picture": item.picture, "category": item.category, "owner": item.owner, "check": check
-                })
+                try:
+                    product = Watchlist.objects.get(item=item)
+                    if product.user == User.objects.get(username=request.user):
+                        check = True
+                    if item.owner == request.user:
+                        isowner = True
+                    return render(request, "auctions/item.html",{
+                        "title": item.title, "price": item.starting_bid, "description": item.description,
+                        "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
+                        "isowner": isowner, "highestBidder": highestBidder
+                    })
+                except:
+                    try:
+                        bid = Bids.objects.get(user=request.user, item=item)
+                        if bid.price == item.starting_bid:
+                            highestBidder = True
+                        if item.owner == request.user:
+                            isowner = True
+                        return render(request, "auctions/item.html",{
+                            "title": item.title, "price": item.starting_bid, "description": item.description,
+                            "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
+                            "isowner": isowner, "highestBidder": highestBidder
+                        })
+                    except:
+                        if item.owner == request.user:
+                            isowner = True
+                        return render(request, "auctions/item.html",{
+                            "title": item.title, "price": item.starting_bid, "description": item.description,
+                            "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
+                            "isowner": isowner, "highestBidder": highestBidder
+                        })
+        except:
+            return HttpResponse("Something went wrong")

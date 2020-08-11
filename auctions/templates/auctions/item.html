@@ -26,13 +26,25 @@
   <p>{{description}}</p>
   <h5>The current bid is at: ${{price}}</h5>
   {% if user.is_authenticated %}
-  <form action="{% url 'item' title %}" method="post">
-    {% csrf_token %}
-    <input type="number" name="bid" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
-    </form>
+    {% if isowner %}
+      <form action="##" method="post">
+        {% csrf_token %}
+        <button type="submit" name="button">Close Auction</button>
+      </form>
+    {% elif highestBidder %}
+      <p>You are the highest bidder!</p>
+      {% else %}
+      <form action="{% url 'bid' title %}" method="post">
+        {% csrf_token %}
+        <input type="number" name="bid" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
+      </form>
+      {% endif %}
     <br> <br>
-    <textarea name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea><br>
-    <button type="submit" name="button">Submit Comment</button>
+    <form action="{% url 'comments' title%}" method="post">
+      {% csrf_token %}
+      <textarea name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea><br>
+      <button type="submit" name="button">Submit Comment</button>
+    </form>
   {% endif %}
   <p>Category: {{category}}</p>
 {% endblock %}

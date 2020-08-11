@@ -21,9 +21,25 @@ class Listings(models.Model):
     def __str__(self):
         return f"{self.title}"
 
+class Bids(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Listings, on_delete=models.CASCADE, default='')
+    price = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.user}'s bid on {self.item} for {self.price}"
+
+class Comments(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Listings, on_delete=models.CASCADE)
+    comment = models.TextField()
+
+    def __str__(self):
+        return f"{self.user} said {self.comment} about {self.item}"
+
 class Watchlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    item = models.OneToOneField(Listings, on_delete=models.CASCADE)
+    item = models.ForeignKey(Listings, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.user} wants {self.item}"
