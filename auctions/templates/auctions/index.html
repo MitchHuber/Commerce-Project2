@@ -5,12 +5,14 @@
 
     <ul class="list-group list-group-flush">
           {% for listing in listings %}
+            {% if listing.isOpen == True %}
             <li class="list-group-item">
               <a href="{% url 'item' listing.title %}">
                 <img style="width: 200px; height:200px;"src="{{listing.picture}}" alt="{{listing.title}}">
                 <p>{{listing.title}} {{listing.description}} Current Price: {{listing.starting_bid}}</p>
               </a>
             </li>
+            {% endif %}
           {% endfor %}
     </ul>
 

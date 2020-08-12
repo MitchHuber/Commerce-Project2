@@ -7,6 +7,13 @@
   </div>
   <br>
   {% endif %}
+  {% if open == False %}
+  <p>Seller: {{owner}}</p>
+  <img style="width:200px; height:200px;"src="{{picture}}" alt="{{title}}">
+  <h3>{{title}}</h3>
+  <p>{{description}}</p>
+  <h4>{{winningMessage}}</h4>
+  {% else %}
   {% if user.is_authenticated %}
     {% if check %}
     <form action="{% url 'removewatchlist' title  %}" method="post">
@@ -27,7 +34,7 @@
   <h5>The current bid is at: ${{price}}</h5>
   {% if user.is_authenticated %}
     {% if isowner %}
-      <form action="##" method="post">
+      <form action="{% url 'close' title%}" method="post">
         {% csrf_token %}
         <button type="submit" name="button">Close Auction</button>
       </form>
@@ -45,6 +52,11 @@
       <textarea name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea><br>
       <button type="submit" name="button">Submit Comment</button>
     </form>
+  {% endif %}
+  <p>Comments:</p>
+  {% for comment in comments %}
+  <li>{{comment}}</li>
+  {% endfor %}
   {% endif %}
   <p>Category: {{category}}</p>
 {% endblock %}

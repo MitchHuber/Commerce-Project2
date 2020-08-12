@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.shortcuts import redirect
 
-from .models import User, Categories, Listings, Watchlist, Bids, Comments
+from .models import User, Categories, Listings, Watchlist, Bids, Comments, ListingsWon
 
 
 def index(request):
@@ -47,8 +47,13 @@ def index(request):
         })
     #Get request, passes all the listings
     else:
+        won = False
+        wins = ListingsWon.objects.all()
+        for listing in wins:
+            if listing.user == request.user:
+                won = True
         return render(request, "auctions/index.html",{
-            "listings": Listings.objects.all()
+            "listings": Listings.objects.all(), "won": won
         })
 
 
@@ -105,11 +110,18 @@ def register(request):
 
 def create_listing(request):
     #links user to the webpage to create a new listing
+    won = False
+    wins = ListingsWon.objects.all()
+    for listing in wins:
+        if listing.user == request.user:
+            won = True
     return render(request, "auctions/create_listing.html", {
-        "categories": Categories.objects.all()
+        "categories": Categories.objects.all(), "won": won
     })
 
 def watchlist(request):
+    won = False
+    wins = ListingsWon.objects.all()
     watchlist = Watchlist.objects.all()
     list = []
 
@@ -117,13 +129,17 @@ def watchlist(request):
         if listing.user == User.objects.get(username=request.user):
             list.append(listing.item)
 
+    for listing in wins:
+        if listing.user == request.user:
+            won = True
+
     if len(list) == 0:
         return render(request, "auctions/category.html",{
-            "message": "There are no items in your watchlist."
+            "message": "There are no items in your watchlist.", "won": won
             })
     else:
         return render(request, "auctions/category.html",{
-            "items": list
+            "items": list, "won":won
         })
 
 def addwatchlist(request, title):
@@ -140,6 +156,12 @@ def addwatchlist(request, title):
         if item.owner == request.user:
             isowner = True
 
+        comments = Comments.objects.all()
+        commentList = []
+        for comment in comments:
+            if comment.item == item:
+                commentList.append(comment)
+
         try:
             bid = Bids.objects.get(user=request.user,item=item)
             if bid.price == item.starting_bid:
@@ -147,13 +169,13 @@ def addwatchlist(request, title):
             return render(request,"auctions/item.html",{
                 "title": item.title, "price": item.starting_bid, "description": item.description,
                 "picture": item.picture, "category": item.category, "check": True, "owner": item.owner,
-                "highestBidder": highestBidder, "isowner": isowner
+                "highestBidder": highestBidder, "isowner": isowner, "comments": commentList
             })
         except:
             return render(request, "auctions/item.html",{
             "title": item.title, "price": item.starting_bid, "description": item.description,
             "picture": item.picture, "category": item.category, "check": True, "owner": item.owner,
-            "isowner": isowner
+            "isowner": isowner, "comments": commentList
             })
 
 def removewatchlist(request, title):
@@ -163,6 +185,12 @@ def removewatchlist(request, title):
     isowner = False
     if item.owner == request.user:
         isowner = True
+
+    comments = Comments.objects.all()
+    commentList = []
+    for comment in comments:
+        if comment.item == item:
+            commentList.append(comment)
     try:
         bid = Bids.objects.get(user=request.user,item=item)
         if bid.price == item.starting_bid:
@@ -170,26 +198,36 @@ def removewatchlist(request, title):
         return render(request,"auctions/item.html",{
             "title": item.title, "price": item.starting_bid, "description": item.description,
             "picture": item.picture, "category": item.category, "check": False, "owner": item.owner,
-            "highestBidder": highestBidder, "isowner": isowner
+            "highestBidder": highestBidder, "isowner": isowner, "comments": commentList
         })
     except:
         return render(request,"auctions/item.html",{
             "title": item.title, "price": item.starting_bid, "description": item.description,
             "picture": item.picture, "category": item.category, "check": False, "owner": item.owner,
-            "isowner": isowner
+            "isowner": isowner, "comments": commentList
         })
 
 def categories(request):
     #Links user to the webpage that displays all of the categories
+    won = False
+    wins = ListingsWon.objects.all()
+    for listing in wins:
+        if listing.user == request.user:
+            won = True
     return render(request, "auctions/categories.html",{
-        "categories": Categories.objects.all()
+        "categories": Categories.objects.all(), "won": won
     })
 
 def category(request, cat):
+
+    won = False
+    wins = ListingsWon.objects.all()
+    for listing in wins:
+        if listing.user == request.user:
+            won = True
     #Create a list for listings with a specific category
     list = []
     items = Listings.objects.all()
-
     #Checks between the category selcted and the listing's category
     for item in items:
         if item.category == Categories.objects.get(category=cat):
@@ -200,11 +238,25 @@ def category(request, cat):
             "message": f"There are no items in the {cat} category."
         })
     return render(request, "auctions/category.html", {
-        "items": list
+        "items": list, "won": won
     })
 
 def comment(request,title):
     item = Listings.objects.get(title=title)
+
+    if not request.POST.get('comments'):
+        comments = Comments.objects.all()
+        commentList = []
+        for comment in comments:
+            if comment.item == item:
+                commentList.append(comment)
+
+        return render(request, "auctions/item.html",{
+            "title": item.title, "price": item.starting_bid,
+            "description": item.description, "picture": item.picture,
+            "category": item.category, "comments": commentList,
+            "message": "You have to include a review."
+        })
 
     comment = Comments(
         user = request.user,
@@ -213,11 +265,17 @@ def comment(request,title):
     )
 
     comment.save()
+    comments = Comments.objects.all()
+    commentList = []
+
+    for comment in comments:
+        if comment.item == item:
+            commentList.append(comment)
 
     return render(request, "auctions/item.html",{
-        "message": message, "title": item.title, "price": item.starting_bid,
+        "title": item.title, "price": item.starting_bid,
         "description": item.description, "picture": item.picture,
-        "category": item.category
+        "category": item.category, "comments": commentList
     })
 
 def bid(request,title):
@@ -258,62 +316,96 @@ def bid(request,title):
                 "category": item.category
             })
 
+def close(request,title):
+    winner = ""
+
+    item = Listings.objects.get(title=title)
+    bids = Bids.objects.all()
+
+    for bid in bids:
+        if bid.item == item and bid.price == item.starting_bid:
+            winner = bid.user
+            open = False
+
+    listing = ListingsWon(
+        user = winner,
+        item = item
+    )
+    listing.save()
+
+    item.isOpen = False
+    item.save()
+
+    return render(request, "auctions/item.html",{
+    "title": item.title, "price": item.starting_bid, "description": item.description,
+    "picture": item.picture, "category": item.category, "owner": item.owner, "winner":winner,
+    "open": open,
+    })
+
+def listingsWon(request):
+    wins = ListingsWon.objects.all()
+    won = []
+
+    for listing in wins:
+        if listing.user == request.user:
+            title = listing.item
+            item = Listings.objects.get(title=title)
+            won.append(item)
+
+    return render(request, "auctions/listingsWon.html",{
+        "items": won, "won": True,
+    })
+
 def item(request, title):
     if title == "admin":
         return HttpResponseRedirect(reverse('admin:index'))
     else:
         try:
-            item = Listings.objects.get(title=title)
+            won = False
             check = False
             isowner = False
             highestBidder = False
             commentList = []
 
-            try:
-                product = Watchlist.objects.get(item=item)
-                if product.user == User.objects.get(username=request.user):
+            item = Listings.objects.get(title=title)
+            bids = Bids.objects.all()
+            wlist = Watchlist.objects.all()
+            comments = Comments.objects.all()
+            wins = ListingsWon.objects.all()
+
+            for listing in wins:
+                if listing.user == request.user:
+                    won = True
+
+            for product in wlist:
+                if product.item == item and product.user == request.user:
                     check = True
-                bid = Bids.objects.get(user=request.user,item=item)
-                if bid.price == item.starting_bid:
+
+            for bid in bids:
+                if bid.item == item and bid.user == request.user and bid.price == item.starting_bid:
                     highestBidder = True
-                if item.owner == request.user:
-                    isowner = True
+
+            for comment in comments:
+                if comment.item == item:
+                    commentList.append(comment)
+
+            if item.owner == request.user:
+                isowner = True
+
+            if item.isOpen == False and highestBidder == True:
+                message = f"Congratulations {request.user}! You won the auction for {item}."
                 return render(request, "auctions/item.html",{
                     "title": item.title, "price": item.starting_bid, "description": item.description,
                     "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
-                    "isowner": isowner, "highestBidder": highestBidder
+                    "isowner": isowner, "highestBidder": highestBidder, "comments": commentList, "winningMessage":message,
+                    "open": item.isOpen, "won": won
                 })
-            except:
-                try:
-                    product = Watchlist.objects.get(item=item)
-                    if product.user == User.objects.get(username=request.user):
-                        check = True
-                    if item.owner == request.user:
-                        isowner = True
-                    return render(request, "auctions/item.html",{
-                        "title": item.title, "price": item.starting_bid, "description": item.description,
-                        "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
-                        "isowner": isowner, "highestBidder": highestBidder
-                    })
-                except:
-                    try:
-                        bid = Bids.objects.get(user=request.user, item=item)
-                        if bid.price == item.starting_bid:
-                            highestBidder = True
-                        if item.owner == request.user:
-                            isowner = True
-                        return render(request, "auctions/item.html",{
-                            "title": item.title, "price": item.starting_bid, "description": item.description,
-                            "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
-                            "isowner": isowner, "highestBidder": highestBidder
-                        })
-                    except:
-                        if item.owner == request.user:
-                            isowner = True
-                        return render(request, "auctions/item.html",{
-                            "title": item.title, "price": item.starting_bid, "description": item.description,
-                            "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
-                            "isowner": isowner, "highestBidder": highestBidder
-                        })
+            else:
+                return render(request, "auctions/item.html",{
+                    "title": item.title, "price": item.starting_bid, "description": item.description,
+                    "picture": item.picture, "category": item.category, "owner": item.owner, "check": check,
+                    "isowner": isowner, "highestBidder": highestBidder, "comments": commentList, "open": item.isOpen,
+                    "won": won
+                })
         except:
-            return HttpResponse("Something went wrong")
+            HttpResponse("Something went wrong, try again later.")

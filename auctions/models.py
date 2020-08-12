@@ -17,6 +17,7 @@ class Listings(models.Model):
     picture = models.URLField(null=True)
     category = models.ForeignKey(Categories, on_delete=models.CASCADE, null=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, default=1)
+    isOpen = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.title}"
@@ -35,7 +36,7 @@ class Comments(models.Model):
     comment = models.TextField()
 
     def __str__(self):
-        return f"{self.user} said {self.comment} about {self.item}"
+        return f"{self.user} said {self.comment}"
 
 class Watchlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -43,3 +44,10 @@ class Watchlist(models.Model):
 
     def __str__(self):
         return f"{self.user} wants {self.item}"
+
+class ListingsWon(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    item = models.ForeignKey(Listings, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.user} & {self.item}"

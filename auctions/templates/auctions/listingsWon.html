@@ -1,0 +1,16 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+{% if message %}
+ <h1>{{message}}</h1>
+{% endif%}
+<ul class="list-group list-group-flush">
+  {% for item in items %}
+    <li class="list-group-item">
+      <a href="{% url 'item' item.title %}">
+        <img style="width: 200px; height:200px;"src="{{item.picture}}" alt="{{item.title}}">
+        <p>{{item.title}} {{item.description}} Current Price: {{item.starting_bid}}</p>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

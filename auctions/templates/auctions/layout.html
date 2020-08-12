@@ -29,6 +29,11 @@
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'watchlist' %}">Watchlist</a>
+              {% if won == True %}
+                <li>
+                  <a class="nav-link" href="{% url 'listingsWon' %}">Listings Won</a>
+                </li>
+              {% endif %}
               </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
