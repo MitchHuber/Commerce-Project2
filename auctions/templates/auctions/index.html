@@ -1,15 +1,21 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>Active Listings</h2>
-
     <ul class="list-group list-group-flush">
           {% for listing in listings %}
             {% if listing.isOpen == True %}
             <li class="list-group-item">
               <a href="{% url 'item' listing.title %}">
-                <img style="width: 200px; height:200px;"src="{{listing.picture}}" alt="{{listing.title}}">
-                <p>{{listing.title}} {{listing.description}} Current Price: {{listing.starting_bid}}</p>
+                <div class="row">
+                  <div class="col-2">
+                    <img  class="rounded float-left" style="width: 200px; height:200px;"src="{{listing.picture}}" alt="{{listing.title}}">
+                  </div>
+                  <div class="col-3">
+                    <p>{{listing.title}}</p>
+                    <p>{{listing.description}}</p>
+                    <p>Current Price: {{listing.starting_bid}}</p>
+                  </div>
+                </div>
               </a>
             </li>
             {% endif %}

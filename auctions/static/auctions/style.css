@@ -1,0 +1,18 @@
+body {
+    padding: 10px;
+}
+img{
+  width: 425px;
+  height: 425px;
+  border-color: black;
+  border-style: solid;
+}
+.info-container{
+  align-content:center;
+  width: 40%;
+}
+.jumbotron{
+  position: relative;
+  justify-content: center;
+
+}

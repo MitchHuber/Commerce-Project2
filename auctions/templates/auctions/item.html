@@ -2,61 +2,84 @@
 
 {% block body %}
   {% if message %}
-  <div >
-    {{message}}
-  </div>
-  <br>
+    <div class="alert alert-primary" role="alert">
+      {{message}}
+    </div>
   {% endif %}
-  {% if open == False %}
-  <p>Seller: {{owner}}</p>
-  <img style="width:200px; height:200px;"src="{{picture}}" alt="{{title}}">
-  <h3>{{title}}</h3>
-  <p>{{description}}</p>
-  <h4>{{winningMessage}}</h4>
-  {% else %}
-  {% if user.is_authenticated %}
-    {% if check %}
-    <form action="{% url 'removewatchlist' title  %}" method="post">
-      {% csrf_token %}
-      <button type="submit" name="wishlist">Remove {{title}} from watchlist</button><br><br>
-    </form>
+  <div class="jumbotron">
+    {% if open == False %}
+      <p>Seller: {{owner}}</p>
+      <div class="row">
+        <div class="col-4">
+          <img class="rounded float-left" src="{{picture}}" alt="{{title}}">
+        </div>
+      <div class="col-8" class="info-container">
+        <h3>{{title}}</h3>
+        <p>{{description}}</p>
+        <h4>{{winningMessage}}</h4>
+        <p>Category: {{category}}</p>
+      </div>
     {% else %}
-    <form action="{% url 'addwatchlist' title  %}" method="post">
-      {% csrf_token %}
-      <button type="submit" name="wishlist">Add {{title}} to watchlist</button><br><br>
-    </form>
-    {% endif %}
-  {% endif %}
-  <p>Seller: {{owner}}</p>
-  <img style="width:200px; height:200px;"src="{{picture}}" alt="{{title}}">
-  <h3>{{title}}</h3>
-  <p>{{description}}</p>
-  <h5>The current bid is at: ${{price}}</h5>
-  {% if user.is_authenticated %}
-    {% if isowner %}
-      <form action="{% url 'close' title%}" method="post">
-        {% csrf_token %}
-        <button type="submit" name="button">Close Auction</button>
-      </form>
-    {% elif highestBidder %}
-      <p>You are the highest bidder!</p>
-      {% else %}
-      <form action="{% url 'bid' title %}" method="post">
-        {% csrf_token %}
-        <input type="number" name="bid" value="{{price}}"> <button type="submit" name="button">Submit bid</button>
-      </form>
+        <p>Seller: {{owner}}</p>
+        {% if user.is_authenticated %}
+          {% if check %}
+            <form action="{% url 'removewatchlist' title  %}" method="post">
+              {% csrf_token %}
+              <button class="btn btn-dark" type="submit" name="wishlist">Remove {{title}} from watchlist</button><br><br>
+            </form>
+          {% else %}
+            <form action="{% url 'addwatchlist' title  %}" method="post">
+              {% csrf_token %}
+              <button class="btn btn-dark" type="submit" name="wishlist">Add {{title}} to watchlist</button><br><br>
+            </form>
+          {% endif %}
       {% endif %}
-    <br> <br>
-    <form action="{% url 'comments' title%}" method="post">
-      {% csrf_token %}
-      <textarea name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea><br>
-      <button type="submit" name="button">Submit Comment</button>
-    </form>
-  {% endif %}
-  <p>Comments:</p>
-  {% for comment in comments %}
-  <li>{{comment}}</li>
-  {% endfor %}
-  {% endif %}
-  <p>Category: {{category}}</p>
+      <div class="row">
+        <div class="col-4">
+          <img class="rounded float-left" src="{{picture}}" alt="{{title}}">
+        </div>
+        <div class="col-8" class="info-container">
+        <h3>{{title}}</h3>
+          <p>{{description}}</p>
+          <p>The current bid is at: ${{price}}</p>
+          {% if user.is_authenticated %}
+            {% if isowner %}
+              <form action="{% url 'close' title%}" method="post">
+                {% csrf_token %}
+                <button class="btn btn-dark" type="submit" name="button">Close Auction</button>
+              </form>
+            {% elif highestBidder %}
+              <p>You are the highest bidder!</p>
+              <form action="{% url 'comments' title%}" method="post">
+                {% csrf_token %}
+                <textarea class="form-control" name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea>
+                <button class="btn btn-dark" type="submit" name="button">Submit Comment</button>
+              </form>
+            {% else %}
+              <form action="{% url 'bid' title %}" method="post">
+                {% csrf_token %}
+                    <input class="form-control" type="number" name="bid" value="{{price}}">
+                    <button class="btn btn-dark" type="submit" name="button">Submit bid</button>
+              </form>
+              <br>
+              <form action="{% url 'comments' title%}" method="post">
+                {% csrf_token %}
+                <textarea class="form-control" name="comments" rows="5" cols="25" placeholder="Leave a comment"></textarea>
+                <button class="btn btn-dark" type="submit" name="button">Submit Comment</button>
+              </form>
+          </div>
+        </div>
+        {% endif %}
+      {% endif %}
+      <br>
+      <p>Comments:</p>
+      <ul class="list-group list-group-flush">
+        {% for comment in comments %}
+          <li class="list-group-item">{{comment}}</li>
+        {% endfor %}
+      </ul>
+      <br>
+      <p>Category: {{category}}</p>
+    {% endif %}
+  </div>
 {% endblock %}

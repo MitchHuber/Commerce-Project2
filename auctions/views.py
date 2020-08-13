@@ -147,6 +147,13 @@ def addwatchlist(request, title):
         user = User.objects.get(username=request.user)
         item = Listings.objects.get(title=title)
         isowner = False
+        won = False
+
+        wins = ListingsWon.objects.all()
+        for listing in wins:
+            if listing.user == request.user:
+                won = True
+
         watchlist = Watchlist(
             user = user,
             item = item
@@ -169,20 +176,27 @@ def addwatchlist(request, title):
             return render(request,"auctions/item.html",{
                 "title": item.title, "price": item.starting_bid, "description": item.description,
                 "picture": item.picture, "category": item.category, "check": True, "owner": item.owner,
-                "highestBidder": highestBidder, "isowner": isowner, "comments": commentList
+                "highestBidder": highestBidder, "isowner": isowner, "comments": commentList, "won": won
             })
         except:
             return render(request, "auctions/item.html",{
             "title": item.title, "price": item.starting_bid, "description": item.description,
             "picture": item.picture, "category": item.category, "check": True, "owner": item.owner,
-            "isowner": isowner, "comments": commentList
+            "isowner": isowner, "comments": commentList, "won": won
             })
 
 def removewatchlist(request, title):
     user = User.objects.get(username=request.user)
     item = Listings.objects.get(title=title)
     product = Watchlist.objects.get(user=user,item=item).delete()
+    wins = ListingsWon.objects.all()
     isowner = False
+    won = False
+
+    for listing in wins:
+        if listing.user == request.user:
+            won = True
+
     if item.owner == request.user:
         isowner = True
 
@@ -198,13 +212,13 @@ def removewatchlist(request, title):
         return render(request,"auctions/item.html",{
             "title": item.title, "price": item.starting_bid, "description": item.description,
             "picture": item.picture, "category": item.category, "check": False, "owner": item.owner,
-            "highestBidder": highestBidder, "isowner": isowner, "comments": commentList
+            "highestBidder": highestBidder, "isowner": isowner, "comments": commentList, "won": won
         })
     except:
         return render(request,"auctions/item.html",{
             "title": item.title, "price": item.starting_bid, "description": item.description,
             "picture": item.picture, "category": item.category, "check": False, "owner": item.owner,
-            "isowner": isowner, "comments": commentList
+            "isowner": isowner, "comments": commentList, "won": won
         })
 
 def categories(request):
@@ -230,7 +244,7 @@ def category(request, cat):
     items = Listings.objects.all()
     #Checks between the category selcted and the listing's category
     for item in items:
-        if item.category == Categories.objects.get(category=cat):
+        if item.category == Categories.objects.get(category=cat) and item.isOpen:
             list.append(item)
     #Path if chosen category has no listings
     if len(list) == 0:
@@ -254,7 +268,7 @@ def comment(request,title):
         return render(request, "auctions/item.html",{
             "title": item.title, "price": item.starting_bid,
             "description": item.description, "picture": item.picture,
-            "category": item.category, "comments": commentList,
+            "category": item.category, "comments": commentList, "owner": item.owner,
             "message": "You have to include a review."
         })
 
@@ -288,7 +302,7 @@ def bid(request,title):
             "message": "Your bid must be greater than the current bid.",
             "title": item.title, "price": item.starting_bid,
             "description": item.description, "picture": item.picture,
-            "category": item.category
+            "category": item.category, "owner": item.owner
         })
     else:
         item.starting_bid = bid
